@@ -82,7 +82,6 @@ class PCLoraModel(LoraModel):
             ft_dist_losses[name] = to.nn.functional.mse_loss(student_activations, teacher_activations)    
             
         ft_dist_loss_list = list(ft_dist_losses.values())
-        my_logger.info(f"ft_distil_losses: {ft_dist_losses}") 
         
         ft_dist_loss = to.mean(to.tensor(ft_dist_loss_list))    
         task_loss = out["loss"]
