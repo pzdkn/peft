@@ -68,7 +68,6 @@ class PCLoraModel(LoraModel):
         
         self._task_loss_alpha = self.peft_config[adapter_name].task_loss_alpha
         self._q = self.peft_config[adapter_name].q
-        self._set_inference_mode(self.peft_config[adapter_name].inference_mode)
                     
     def forward(self, *args, **kwargs):
         kwargs["output_hidden_states"] = False        
@@ -118,7 +117,7 @@ class PCLoraModel(LoraModel):
         for name, module in self._get_lora_modules():    
             module.update(lambda_ft_distill, **kwargs)
             
-    def _set_inference_mode(self, mode: bool):
+    def set_inference_mode(self, mode: bool):
         """ Set the inference mode for all the LoRA layers. In inference mode the base layer is inactive """
         for name, module in self._get_lora_modules():
             module._inference_mode = mode
