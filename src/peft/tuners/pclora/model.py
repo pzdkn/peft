@@ -117,7 +117,16 @@ class PCLoraModel(LoraModel):
         for name, module in self._get_lora_modules():    
             module.update(lambda_ft_distill, **kwargs)
             
-    def set_inference_mode(self, mode: bool):
+    def set_inference_mode(self, mode: bool) -> None:
         """ Set the inference mode for all the LoRA layers. In inference mode the base layer is inactive """
         for name, module in self._get_lora_modules():
             module._inference_mode = mode
+    
+    def parameters_count_info(self) -> Dict[str, int]:
+        """Counts total parameters and LoRA parameters"""
+        total_parameters = sum(param.numel() for param in self.parameters())
+        lora_parameters = 0
+        for name, module in self._get_lora_modules():
+            lora_parameters += sum(param.numel() for param in module.parameters())
+        return {"total": total_parameters, "used": lora_parameters}
+        
