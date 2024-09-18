@@ -30,14 +30,16 @@ class PCLoRALayer(Linear):
         """
         self._check_forward_args(x, *args, **kwargs) 
         
-        # In inference the base_layer is always inactive
-        base_result = self.base_layer(x, *args, **kwargs) if self._inference_mode is False else 0.0
-        
-        if base_result.requires_grad:
-            # Never propagate gradients through the base layer
-            base_result = base_result.detach()
+        if self._inference_mode:
+            # In inference the base_layer is always inactive
+            base_result = 0.0
+            torch_result_dtype = x.dtype
+        else:
+            base_result = self.base_layer(x, *args, **kwargs)
+            if base_result.requires_grad:
+                base_result = base_result.detach()
+            torch_result_dtype = base_result.dtype
             
-        torch_result_dtype = base_result.dtype
         self.teacher_activations = base_result
         
         #torch_result_dtype = result.dtype

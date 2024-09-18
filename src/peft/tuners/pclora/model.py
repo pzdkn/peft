@@ -68,7 +68,6 @@ class PCLoraModel(LoraModel):
         
         self._task_loss_alpha = self.peft_config[adapter_name].task_loss_alpha
         self._q = self.peft_config[adapter_name].q
-        self._set_inference_mode(self.peft_config[adapter_name].inference_mode)
                     
     def forward(self, *args, **kwargs):
         kwargs["output_hidden_states"] = False        
@@ -82,7 +81,6 @@ class PCLoraModel(LoraModel):
             ft_dist_losses[name] = to.nn.functional.mse_loss(student_activations, teacher_activations)    
             
         ft_dist_loss_list = list(ft_dist_losses.values())
-        my_logger.info(f"ft_distil_losses: {ft_dist_losses}") 
         
         ft_dist_loss = to.mean(to.tensor(ft_dist_loss_list))    
         task_loss = out["loss"]
@@ -119,7 +117,16 @@ class PCLoraModel(LoraModel):
         for name, module in self._get_lora_modules():    
             module.update(lambda_ft_distill, **kwargs)
             
-    def _set_inference_mode(self, mode: bool):
+    def set_inference_mode(self, mode: bool) -> None:
         """ Set the inference mode for all the LoRA layers. In inference mode the base layer is inactive """
         for name, module in self._get_lora_modules():
             module._inference_mode = mode
+    
+    def parameters_count_info(self) -> Dict[str, int]:
+        """Counts total parameters and LoRA parameters"""
+        total_parameters = sum(param.numel() for param in self.parameters())
+        lora_parameters = 0
+        for name, module in self._get_lora_modules():
+            lora_parameters += sum(param.numel() for param in module.parameters())
+        return {"total": total_parameters, "used": lora_parameters}
+        
